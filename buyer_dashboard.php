@@ -459,35 +459,16 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
   </h2>
   <p class="text-gray-600 mb-8">Lihat berbagai pilihan obat yang tersedia di apotek kami</p>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-    <?php while ($o = mysqli_fetch_assoc($data)) : ?>
-    <div class="group bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-green-300">
-      
-      <div class="relative h-40 bg-gradient-to-br from-green-100 to-blue-50 flex items-center justify-center overflow-hidden">
-        <img src="<?= $o['gambar'] ?>" class="h-32 object-contain transition-transform duration-500 group-hover:scale-125">
-        <span class="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
-          <?= $o['kategori'] ?>
-        </span>
-      </div>
-
-      <div class="p-5 space-y-3">
-        <h3 class="font-bold text-lg text-gray-800 line-clamp-2"><?= $o['nama'] ?></h3>
-        
-        <p class="text-sm text-gray-600 line-clamp-2">
-          <?= $o['deskripsi'] ?? 'Obat berkualitas tinggi' ?>
-        </p>
-        
-        <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
-          <span class="text-2xl font-bold text-green-600">
-            Rp<?= number_format($o['harga']) ?>
-          </span>
-          <div class="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600 font-bold">
-            ✓
-          </div>
+  <div id="daftarObatContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Obat akan di-load via JavaScript untuk menampilkan stok realtime -->
+    <div class="flex justify-center items-center col-span-full py-12">
+      <div class="text-center">
+        <div class="animate-spin mb-4">
+          <i class="fas fa-spinner text-4xl text-green-600"></i>
         </div>
+        <p class="text-gray-600 font-medium">Memuat daftar obat...</p>
       </div>
     </div>
-    <?php endwhile; ?>
   </div>
 </section>
 
@@ -663,6 +644,93 @@ function showToast(title, message, type = 'success', duration = 4000) {
   }
 }
 
+// ===== LOAD DAFTAR OBAT DENGAN STOK REALTIME =====
+async function loadDaftarObat() {
+  try {
+    const res = await fetch("api/manage_stok.php?action=get_stok_pembeli");
+    const data = await res.json();
+    
+    if (!data.success || !data.data) {
+      document.getElementById('daftarObatContainer').innerHTML = `
+        <div class="flex justify-center items-center col-span-full py-12">
+          <div class="text-center text-red-600">
+            <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+            <p class="font-medium">Gagal memuat daftar obat</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    const obats = data.data;
+    
+    if (obats.length === 0) {
+      document.getElementById('daftarObatContainer').innerHTML = `
+        <div class="flex justify-center items-center col-span-full py-12">
+          <div class="text-center text-gray-500">
+            <i class="fas fa-inbox text-4xl mb-4"></i>
+            <p class="font-medium">Tidak ada obat yang tersedia saat ini</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    const html = obats.map(o => {
+      const stok = o.stok || 0;
+      const stokStatus = stok === 0 ? 'Habis' : stok < 5 ? 'Stok Terbatas' : 'Tersedia';
+      const stokColor = stok === 0 ? '#ef4444' : stok < 5 ? '#f59e0b' : '#10b981';
+      const bgColor = stok === 0 ? '#fee2e2' : stok < 5 ? '#fef3c7' : '#dcfce7';
+      
+      return `
+        <div class="group bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-green-300 ${stok === 0 ? 'opacity-60' : ''}">
+          
+          <div class="relative h-40 bg-gradient-to-br from-green-100 to-blue-50 flex items-center justify-center overflow-hidden">
+            <img src="${o.gambar}" class="h-32 object-contain transition-transform duration-500 group-hover:scale-125" onerror="this.src='https://via.placeholder.com/200'">
+            <span class="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+              ${o.kategori}
+            </span>
+            
+            <!-- BADGE STOK REALTIME -->
+            <span class="absolute bottom-3 left-3 text-xs font-bold px-3 py-1 rounded-full shadow-md" style="background-color: ${bgColor}; color: ${stokColor};">
+              📦 ${stokStatus}: ${stok}
+            </span>
+          </div>
+
+          <div class="p-5 space-y-3">
+            <h3 class="font-bold text-lg text-gray-800 line-clamp-2">${o.nama}</h3>
+            
+            <p class="text-sm text-gray-600 line-clamp-2">
+              ${o.deskripsi || 'Obat berkualitas tinggi'}
+            </p>
+            
+            <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
+              <span class="text-2xl font-bold text-green-600">
+                Rp${Number(o.harga).toLocaleString('id-ID')}
+              </span>
+              <div class="flex items-center justify-center w-10 h-10 rounded-full ${stok > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} font-bold">
+                ${stok > 0 ? '✓' : '✕'}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('daftarObatContainer').innerHTML = html;
+  } catch (error) {
+    console.error('Error loading obat:', error);
+    document.getElementById('daftarObatContainer').innerHTML = `
+      <div class="flex justify-center items-center col-span-full py-12">
+        <div class="text-center text-red-600">
+          <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+          <p class="font-medium">Terjadi kesalahan saat memuat obat</p>
+        </div>
+      </div>
+    `;
+  }
+}
+
 document.getElementById("kirimKeluhan").addEventListener("click", () => {
   const nama = document.getElementById("nama_pembeli").value.trim();
   const keluhan = document.getElementById("keluhan").value.trim();
@@ -717,7 +785,7 @@ async function loadStatusPesanan(){
       border-radius:14px;
       background:#f0fdf4;
     ">
-      <img src="${o.gambar}" style="width:60px;height:60px;object-fit:contain;">
+      <img src="${o.gambar}" style="width:60px;height:60px;object-fit:contain;" onerror="this.src='https://via.placeholder.com/60'">
       <div style="text-align:left;">
         <b>${o.nama}</b><br>
         <small style="color:#16a34a">
@@ -749,7 +817,12 @@ async function loadStatusPesanan(){
   return;
 }
 }
-// ✅ PANGGIL YANG BENAR
+
+// ✅ LOAD OBAT REALTIME SETIAP 3 DETIK
+setInterval(loadDaftarObat, 3000);
+loadDaftarObat();
+
+// ✅ LOAD STATUS PESANAN REALTIME SETIAP 2 DETIK
 setInterval(loadStatusPesanan, 2000);
 loadStatusPesanan();
 </script>

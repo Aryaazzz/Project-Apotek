@@ -32,12 +32,20 @@ if ($p['status'] === 'selesai') {
 // Hapus obat lama jika ada
 mysqli_query($conn, "DELETE FROM pesanan_obat WHERE pesanan_id='$pesanan_id'");
 
-// Insert Obat Baru
+// Insert Obat Baru & Kurangi Stok
 foreach ($obat_ids as $oid) {
   $oid = mysqli_real_escape_string($conn, $oid);
+  
+  // Insert ke pesanan_obat
   mysqli_query($conn, "
     INSERT INTO pesanan_obat (pesanan_id, obat_id)
     VALUES ('$pesanan_id', '$oid')
+  ");
+  
+  // ✅ KURANGI STOK OBAT (1 unit per obat)
+  mysqli_query($conn, "
+    UPDATE obat SET stok = stok - 1
+    WHERE id='$oid' AND stok > 0
   ");
 }
 
@@ -48,8 +56,9 @@ $update = mysqli_query($conn, "
 ");
 
 if ($update) {
-  echo "Pesanan berhasil diselesaikan! Pembeli akan melihat obat di dashboardnya.";
+  echo "Pesanan berhasil diselesaikan! Stok obat telah dikurangi otomatis.";
 } else {
   http_response_code(500);
   echo "Status Error: Gagal mengupdate status pesanan";
 }
+

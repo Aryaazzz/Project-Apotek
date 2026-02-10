@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester - Fitur Stok Realtime</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .response {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border-left: 4px solid #667eea;
+        }
+        
+        .success {
+            border-left-color: #4caf50;
+            background: #f1f8e9;
+        }
+        
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        
+        .loading {
+            color: #667eea;
+            font-style: italic;
+        }
+        
+        .endpoint {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #1565c0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .timestamp {
+            color: #999;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 API Tester - Fitur Stok Realtime</h1>
+        
+        <div class="info">
+            ℹ️ <strong>Info:</strong> Gunakan tools ini untuk test semua API endpoints. Pastikan Anda sudah login sebagai admin di browser lain.
+        </div>
+        
+        <div class="grid">
+            <!-- GET Stok Single -->
+            <div class="card">
+                <h2>📦 Get Stok Single Obat</h2>
+                <div class="endpoint">GET /api/manage_stok.php?action=get_stok&obat_id={id}</div>
+                
+                <div class="form-group">
+                    <label>Obat ID:</label>
+                    <input type="number" id="getStokId" placeholder="Misal: 27" value="27" min="1">
+                </div>
+                
+                <button onclick="getStok()">🔍 Get Stok</button>
+                
+                <div id="getStokResponse" class="response" style="display:none;"></div>
+            </div>
+            
+            <!-- GET All Stok -->
+            <div class="card">
+                <h2>📊 Get Semua Stok</h2>
+                <div class="endpoint">GET /api/manage_stok.php?action=get_all_stok</div>
+                
+                <p style="color:#666; font-size:13px; margin-bottom:15px;">
+                    Mengambil semua stok obat (untuk admin)
+                </p>
+                
+                <button onclick="getAllStok()">📥 Get All Stok</button>
+                
+                <div id="getAllStokResponse" class="response" style="display:none;"></div>
+            </div>
+            
+            <!-- Update/Restok Stok -->
+            <div class="card">
+                <h2>✏️ Update/Restok Stok</h2>
+                <div class="endpoint">POST /api/manage_stok.php?action=update_stok</div>
+                
+                <div class="form-group">
+                    <label>Obat ID:</label>
+                    <input type="number" id="updateStokId" placeholder="Misal: 27" value="27" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Jumlah:</label>
+                    <input type="number" id="updateStokJumlah" placeholder="Misal: 50" value="50" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipe Operasi:</label>
+                    <select id="updateStokTipe">
+                        <option value="tambah">Tambah Stok</option>
+                        <option value="kurang">Kurang Stok</option>
+                    </select>
+                </div>
+                
+                <button onclick="updateStok()">💾 Update Stok</button>
+                
+                <div id="updateStokResponse" class="response" style="display:none;"></div>
+            </div>
+            
+            <!-- GET Stok Pembeli -->
+            <div class="card">
+                <h2>👤 Get Stok untuk Pembeli</h2>
+                <div class="endpoint">GET /api/manage_stok.php?action=get_stok_pembeli</div>
+                
+                <p style="color:#666; font-size:13px; margin-bottom:15px;">
+                    Mengambil hanya obat dengan stok > 0 (untuk buyer dashboard)
+                </p>
+                
+                <button onclick="getStokPembeli()">📥 Get Stok Pembeli</button>
+                
+                <div id="getStokPembeliResponse" class="response" style="display:none;"></div>
+            </div>
+        </div>
+        
+        <!-- Clear All -->
+        <div style="text-align: center;">
+            <button onclick="clearAll()" style="background: #999; max-width: 300px; margin: 0 auto;">🗑️ Clear All Responses</button>
+        </div>
+    </div>
+    
+    <script>
+        function showResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'response ' + (isError ? 'error' : 'success');
+            
+            let content = '<strong>' + (isError ? 'ERROR' : 'RESPONSE') + ':</strong><br>';
+            content += new Date().toLocaleTimeString() + '<br><br>';
+            
+            if (typeof data === 'object') {
+                content += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } else {
+                content += data;
+            }
+            
+            element.innerHTML = content;
+        }
+        
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'response loading';
+            element.innerHTML = '⏳ Loading...';
+        }
+        
+        // GET Stok Single
+        async function getStok() {
+            const id = document.getElementById('getStokId').value;
+            
+            if (!id || id <= 0) {
+                showResponse('getStokResponse', 'Obat ID tidak valid', true);
+                return;
+            }
+            
+            showLoading('getStokResponse');
+            
+            try {
+                const res = await fetch(`api/manage_stok.php?action=get_stok&obat_id=${id}`);
+                const data = await res.json();
+                showResponse('getStokResponse', data, !data.success);
+            } catch (error) {
+                showResponse('getStokResponse', error.message, true);
+            }
+        }
+        
+        // GET All Stok
+        async function getAllStok() {
+            showLoading('getAllStokResponse');
+            
+            try {
+                const res = await fetch('api/manage_stok.php?action=get_all_stok');
+                const data = await res.json();
+                showResponse('getAllStokResponse', data, !data.success);
+            } catch (error) {
+                showResponse('getAllStokResponse', error.message, true);
+            }
+        }
+        
+        // UPDATE Stok
+        async function updateStok() {
+            const id = document.getElementById('updateStokId').value;
+            const jumlah = document.getElementById('updateStokJumlah').value;
+            const tipe = document.getElementById('updateStokTipe').value;
+            
+            if (!id || id <= 0 || !jumlah || jumlah <= 0) {
+                showResponse('updateStokResponse', 'Data tidak valid', true);
+                return;
+            }
+            
+            showLoading('updateStokResponse');
+            
+            try {
+                const res = await fetch('api/manage_stok.php?action=update_stok', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        obat_id: parseInt(id),
+                        jumlah: parseInt(jumlah),
+                        tipe: tipe
+                    })
+                });
+                
+                const data = await res.json();
+                showResponse('updateStokResponse', data, !data.success);
+            } catch (error) {
+                showResponse('updateStokResponse', error.message, true);
+            }
+        }
+        
+        // GET Stok Pembeli
+        async function getStokPembeli() {
+            showLoading('getStokPembeliResponse');
+            
+            try {
+                const res = await fetch('api/manage_stok.php?action=get_stok_pembeli');
+                const data = await res.json();
+                showResponse('getStokPembeliResponse', data, !data.success);
+            } catch (error) {
+                showResponse('getStokPembeliResponse', error.message, true);
+            }
+        }
+        
+        // Clear All
+        function clearAll() {
+            document.getElementById('getStokResponse').style.display = 'none';
+            document.getElementById('getAllStokResponse').style.display = 'none';
+            document.getElementById('updateStokResponse').style.display = 'none';
+            document.getElementById('getStokPembeliResponse').style.display = 'none';
+        }
+        
+        // Auto-load pada page load
+        window.addEventListener('load', () => {
+            console.log('API Tester loaded. Ready to test!');
+        });
+    </script>
+</body>
+</html>

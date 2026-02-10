@@ -293,7 +293,7 @@ body{
 <!-- DAFTAR OBAT -->
 <section id="obat" class="section bg-white p-8 rounded-2xl shadow-md">
 <h3 class="text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
-  <i class="fas fa-list"></i> Daftar Obat
+  <i class="fas fa-list"></i> Daftar Obat & Kelola Stok
 </h3>
 
 <!-- SEARCH & FILTER -->
@@ -323,9 +323,11 @@ body{
 <table class="w-full">
 <thead class="bg-gradient-to-r from-green-500 to-green-600 text-white">
 <tr>
+  <th class="p-4 text-left font-semibold">Gambar</th>
   <th class="p-4 text-left font-semibold">Nama Obat</th>
   <th class="p-4 text-left font-semibold">Kategori</th>
   <th class="p-4 text-left font-semibold">Harga</th>
+  <th class="p-4 text-center font-semibold">Stok 📦</th>
   <th class="p-4 text-center font-semibold">Aksi</th>
 </tr>
 </thead>
@@ -333,17 +335,35 @@ body{
 <?php
 $q=mysqli_query($conn,"SELECT * FROM obat ORDER BY id DESC");
 while($o=mysqli_fetch_assoc($q)):
+$stok = isset($o['stok']) ? $o['stok'] : 0;
+$stok_color = $stok == 0 ? 'text-red-600 font-bold' : ($stok < 10 ? 'text-orange-600 font-bold' : 'text-green-600 font-bold');
 ?>
-<tr class="border-b hover:bg-gray-50 transition obat-row">
+<tr class="border-b hover:bg-gray-50 transition obat-row" data-obat-id="<?= $o['id'] ?>">
+<td class="p-4 text-center">
+  <div class="w-16 h-16 mx-auto bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border-2 border-gray-200 hover:border-green-500 transition">
+    <?php if (!empty($o['gambar'])): ?>
+      <img src="<?= htmlspecialchars($o['gambar']) ?>" alt="<?= htmlspecialchars($o['nama']) ?>" class="w-full h-full object-cover cursor-pointer" onclick="showImageModal('<?= htmlspecialchars($o['gambar']) ?>', '<?= htmlspecialchars($o['nama']) ?>')">
+    <?php else: ?>
+      <div class="text-gray-400 text-center">
+        <i class="fas fa-image text-3xl"></i>
+        <p class="text-xs mt-1">No Image</p>
+      </div>
+    <?php endif; ?>
+  </div>
+</td>
 <td class="p-4 nama-obat"><?= htmlspecialchars($o['nama']) ?></td>
 <td class="p-4 text-gray-600 kategori-obat"><?= htmlspecialchars($o['kategori']) ?></td>
 <td class="p-4 text-green-600 font-bold">Rp<?= number_format($o['harga']) ?></td>
+<td class="p-4 text-center stok-display <?= $stok_color ?>"><?= $stok ?></td>
 <td class="p-4 text-center">
-  <div class="flex gap-3 justify-center">
-    <a href="edit_obat.php?id=<?= $o['id'] ?>" class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-200 transition font-medium text-sm flex items-center gap-1">
+  <div class="flex gap-2 justify-center flex-wrap">
+    <button onclick="openRestokModal(<?= $o['id'] ?>, '<?= htmlspecialchars($o['nama']) ?>')" class="bg-purple-100 text-purple-600 px-3 py-2 rounded-lg hover:bg-purple-200 transition font-medium text-sm flex items-center gap-1" title="Restok Obat">
+      <i class="fas fa-plus-circle"></i> Restok
+    </button>
+    <a href="edit_obat.php?id=<?= $o['id'] ?>" class="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200 transition font-medium text-sm flex items-center gap-1">
       <i class="fas fa-edit"></i> Edit
     </a>
-    <a href="hapus_obat.php?id=<?= $o['id'] ?>" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg hover:bg-red-200 transition font-medium text-sm flex items-center gap-1">
+    <a href="hapus_obat.php?id=<?= $o['id'] ?>" class="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition font-medium text-sm flex items-center gap-1">
       <i class="fas fa-trash-alt"></i> Hapus
     </a>
   </div>
@@ -432,11 +452,50 @@ while($o=mysqli_fetch_assoc($q)):
   </div>
 </div>
 
+<!-- MODAL RESTOK OBAT -->
+<div id="modalRestok" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md">
+    <h3 class="text-2xl font-bold text-purple-700 mb-2 flex items-center gap-2">
+      <i class="fas fa-boxes"></i> Restok Obat
+    </h3>
+    <p id="restokObatNama" class="text-gray-600 mb-6 text-lg font-semibold"></p>
+    
+    <div class="space-y-5 mb-6">
+      <div>
+        <label class="block text-gray-700 font-semibold mb-2">Stok Saat Ini</label>
+        <input type="text" id="restokStokSaatIni" readonly class="w-full px-4 py-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-700 font-bold text-lg">
+      </div>
+      
+      <div>
+        <label class="block text-gray-700 font-semibold mb-2">Jumlah Tambah</label>
+        <input type="number" id="restokJumlah" min="1" placeholder="Masukkan jumlah..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition" value="0">
+      </div>
+      
+      <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+        <p class="text-sm text-gray-600 mb-2">Stok Setelah Restok:</p>
+        <p id="restokPreview" class="text-2xl font-bold text-purple-600">0</p>
+      </div>
+    </div>
+
+    <div class="flex gap-3 justify-end">
+      <button onclick="closeRestokModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg transition font-medium">
+        <i class="fas fa-times mr-2"></i> Batal
+      </button>
+      <button onclick="submitRestok()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition font-medium flex items-center gap-2">
+        <i class="fas fa-save"></i> Simpan Restok
+      </button>
+    </div>
+  </div>
+</div>
+
 </main>
 </div>
 </div>
 
 <script>
+let currentRestokObatId = null;
+let currentRestokObatNama = null;
+
 function showSection(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -470,6 +529,76 @@ function showToast(title, message, type = 'success', duration = 4000) {
       toast.classList.add('exit');
       setTimeout(() => toast.remove(), 400);
     }, duration);
+  }
+}
+
+// ===== RESTOK MODAL =====
+async function openRestokModal(obatId, obatNama) {
+  currentRestokObatId = obatId;
+  currentRestokObatNama = obatNama;
+  
+  const modal = document.getElementById('modalRestok');
+  document.getElementById('restokObatNama').textContent = obatNama;
+  document.getElementById('restokJumlah').value = 0;
+  
+  // Get current stock
+  const res = await fetch(`api/manage_stok.php?action=get_stok&obat_id=${obatId}`);
+  const data = await res.json();
+  
+  if (data.success) {
+    const stokSaatIni = data.data.stok;
+    document.getElementById('restokStokSaatIni').value = stokSaatIni;
+    document.getElementById('restokJumlah').dataset.stokSaatIni = stokSaatIni;
+  } else {
+    showToast('Error', 'Gagal mendapatkan data stok', 'error');
+    return;
+  }
+  
+  // Update preview when input changes
+  document.getElementById('restokJumlah').addEventListener('input', function() {
+    const stokSaatIni = parseInt(document.getElementById('restokStokSaatIni').value);
+    const jumlah = parseInt(this.value) || 0;
+    const stokBaru = stokSaatIni + jumlah;
+    document.getElementById('restokPreview').textContent = stokBaru;
+  });
+  
+  modal.classList.remove('hidden');
+}
+
+function closeRestokModal() {
+  document.getElementById('modalRestok').classList.add('hidden');
+  currentRestokObatId = null;
+  currentRestokObatNama = null;
+}
+
+async function submitRestok() {
+  const jumlah = parseInt(document.getElementById('restokJumlah').value);
+  
+  if (isNaN(jumlah) || jumlah <= 0) {
+    showToast('Validasi', 'Masukkan jumlah yang valid (> 0)', 'warning');
+    return;
+  }
+  
+  const payload = {
+    obat_id: currentRestokObatId,
+    jumlah: jumlah,
+    tipe: 'tambah'
+  };
+  
+  const res = await fetch('api/manage_stok.php?action=update_stok', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  
+  const data = await res.json();
+  
+  if (data.success) {
+    showToast('Restok Berhasil', `${currentRestokObatNama} ditambah ${jumlah} unit`, 'success');
+    closeRestokModal();
+    location.reload();
+  } else {
+    showToast('Gagal', data.message || 'Gagal mengupdate stok', 'error');
   }
 }
 
@@ -514,7 +643,11 @@ function resetFilter() {
 document.getElementById('searchInput').addEventListener('keyup', filterObat);
 document.getElementById('filterKategori').addEventListener('change', filterObat);
 
-/* ===== PESANAN REALTIME ===== */
+// Tutup modal restok saat klik di luar
+document.getElementById('modalRestok')?.addEventListener('click', function(e) {
+  if (e.target === this) closeRestokModal();
+});
+
 let pesananList = [];
 let obatList = [];
 let currentPesananId = null;
@@ -522,6 +655,40 @@ let currentPesananId = null;
 async function loadObat() {
   const res = await fetch("api/get_obat.php");
   obatList = await res.json();
+}
+
+// ===== LOAD STOK TABEL REALTIME =====
+async function loadStokTable() {
+  try {
+    const res = await fetch("api/manage_stok.php?action=get_all_stok");
+    const data = await res.json();
+    
+    if (!data.success) return;
+    
+    // Update stok di tabel
+    data.data.forEach(obat => {
+      const row = document.querySelector(`tr[data-obat-id="${obat.id}"]`);
+      if (row) {
+        const stokDisplay = row.querySelector('.stok-display');
+        if (stokDisplay) {
+          const stok = obat.stok || 0;
+          stokDisplay.textContent = stok;
+          
+          // Update warna berdasarkan stok
+          stokDisplay.className = 'stok-display ';
+          if (stok == 0) {
+            stokDisplay.className += 'text-red-600 font-bold';
+          } else if (stok < 10) {
+            stokDisplay.className += 'text-orange-600 font-bold';
+          } else {
+            stokDisplay.className += 'text-green-600 font-bold';
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error loading stok:', error);
+  }
 }
 
 async function loadPesanan(){
@@ -590,6 +757,22 @@ function resetFilterPesanan(){
   filterPesanan();
 }
 
+// ===== MODAL GAMBAR =====
+function showImageModal(imageSrc, obatName) {
+  const modal = document.getElementById("modalGambar");
+  document.getElementById("modalGambarImg").src = imageSrc;
+  document.getElementById("modalGambarNama").textContent = obatName;
+  modal.classList.remove('hidden');
+}
+
+function closeImageModal() {
+  document.getElementById("modalGambar").classList.add('hidden');
+}
+
+document.getElementById('modalGambar')?.addEventListener('click', function(e) {
+  if (e.target === this) closeImageModal();
+});
+
 // ===== MODAL OBAT =====
 function openModalObat(pesananId) {
   currentPesananId = pesananId;
@@ -653,6 +836,10 @@ async function submitObat() {
     showToast('Gagal Menyelesaikan', msg, 'error', 5000);
   } else {
     showToast('Pesanan Berhasil Diselesaikan!', msg, 'success', 4000);
+    // ✅ Refresh stok tabel setelah selesaikan pesanan
+    setTimeout(() => {
+      loadStokTable();
+    }, 500);
   }
   
   closeModalObat();
@@ -677,7 +864,31 @@ document.getElementById('searchObatModal').addEventListener('keyup', filterObatM
 loadObat();
 setInterval(loadPesanan, 10000);
 loadPesanan();
+
+// ✅ LOAD STOK REALTIME SETIAP 2 DETIK
+setInterval(loadStokTable, 2000);
+loadStokTable();
 </script>
+
+<!-- MODAL LIHAT GAMBAR OBAT -->
+<div id="modalGambar" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h3 id="modalGambarNama" class="text-2xl font-bold text-gray-800"></h3>
+      <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700 text-2xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="flex justify-center bg-gray-100 rounded-xl p-4">
+      <img id="modalGambarImg" src="" alt="Gambar Obat" class="max-h-96 max-w-full object-contain">
+    </div>
+    <div class="mt-4 flex justify-end">
+      <button onclick="closeImageModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition font-medium">
+        <i class="fas fa-times mr-2"></i> Tutup
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
