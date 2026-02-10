@@ -161,6 +161,30 @@ body{
 <h3 class="text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
   <i class="fas fa-list"></i> Daftar Obat
 </h3>
+
+<!-- SEARCH & FILTER -->
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+  <div class="relative">
+    <input type="text" id="searchInput" placeholder="🔍 Cari nama obat..." class="w-full border-2 border-gray-300 p-3 rounded-lg focus:outline-none focus:border-green-500 transition">
+  </div>
+  <div>
+    <select id="filterKategori" class="w-full border-2 border-gray-300 p-3 rounded-lg focus:outline-none focus:border-green-500 transition bg-white">
+      <option value="">📂 Semua Kategori</option>
+      <?php
+      $kategoris = mysqli_query($conn, "SELECT DISTINCT kategori FROM obat ORDER BY kategori ASC");
+      while($k = mysqli_fetch_assoc($kategoris)):
+      ?>
+      <option value="<?= htmlspecialchars($k['kategori']) ?>"><?= htmlspecialchars($k['kategori']) ?></option>
+      <?php endwhile; ?>
+    </select>
+  </div>
+  <div class="text-right">
+    <button onclick="resetFilter()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 w-full">
+      <i class="fas fa-redo"></i> Reset Filter
+    </button>
+  </div>
+</div>
+
 <div class="overflow-x-auto">
 <table class="w-full">
 <thead class="bg-gradient-to-r from-green-500 to-green-600 text-white">
@@ -171,14 +195,14 @@ body{
   <th class="p-4 text-center font-semibold">Aksi</th>
 </tr>
 </thead>
-<tbody>
+<tbody id="tabelObat">
 <?php
 $q=mysqli_query($conn,"SELECT * FROM obat ORDER BY id DESC");
 while($o=mysqli_fetch_assoc($q)):
 ?>
-<tr class="border-b hover:bg-gray-50 transition">
-<td class="p-4"><?= htmlspecialchars($o['nama']) ?></td>
-<td class="p-4 text-gray-600"><?= htmlspecialchars($o['kategori']) ?></td>
+<tr class="border-b hover:bg-gray-50 transition obat-row">
+<td class="p-4 nama-obat"><?= htmlspecialchars($o['nama']) ?></td>
+<td class="p-4 text-gray-600 kategori-obat"><?= htmlspecialchars($o['kategori']) ?></td>
 <td class="p-4 text-green-600 font-bold">Rp<?= number_format($o['harga']) ?></td>
 <td class="p-4 text-center">
   <div class="flex gap-3 justify-center">
@@ -195,13 +219,40 @@ while($o=mysqli_fetch_assoc($q)):
 </tbody>
 </table>
 </div>
+<div id="emptyMessage" class="text-center p-8 text-gray-500 hidden">
+  <i class="fas fa-search text-4xl mb-3 block"></i>
+  <p class="text-lg font-medium">Tidak ada obat yang cocok dengan filter</p>
+</div>
 </section>
 
 <!-- PESANAN -->
 <section id="pesanan" class="section bg-white p-8 rounded-2xl shadow-md">
 <h3 class="text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
-  <i class="fas fa-shopping-bag"></i> Pesanan Pelanggan
+  <i class="fas fa-shopping-bag"></i> Pesanan Pelanggan (Realtime)
 </h3>
+
+<!-- SEARCH & FILTER PESANAN -->
+<div class="grid md:grid-cols-4 gap-4 mb-6">
+  <div class="relative">
+    <input type="text" id="searchPembeli" placeholder="🔍 Cari nama pembeli..." class="w-full border-2 border-gray-300 p-3 rounded-lg focus:outline-none focus:border-green-500 transition">
+  </div>
+  <div>
+    <input type="text" id="searchKeluhan" placeholder="🏥 Cari keluhan..." class="w-full border-2 border-gray-300 p-3 rounded-lg focus:outline-none focus:border-green-500 transition">
+  </div>
+  <div>
+    <select id="filterStatusPesanan" class="w-full border-2 border-gray-300 p-3 rounded-lg focus:outline-none focus:border-green-500 transition bg-white">
+      <option value="">📋 Semua Status</option>
+      <option value="proses">⏳ Diproses</option>
+      <option value="selesai">✅ Selesai</option>
+    </select>
+  </div>
+  <div class="text-right">
+    <button onclick="resetFilterPesanan()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 w-full">
+      <i class="fas fa-redo"></i> Reset
+    </button>
+  </div>
+</div>
+
 <div class="overflow-x-auto">
 <table class="w-full">
 <thead class="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
@@ -215,7 +266,34 @@ while($o=mysqli_fetch_assoc($q)):
 <tbody id="tabelPesanan"></tbody>
 </table>
 </div>
+<div id="emptyMessagePesanan" class="text-center p-8 text-gray-500 hidden">
+  <i class="fas fa-search text-4xl mb-3 block"></i>
+  <p class="text-lg font-medium">Tidak ada pesanan yang cocok dengan filter</p>
+</div>
 </section>
+
+<!-- MODAL PILIH OBAT -->
+<div id="modalObat" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-96 overflow-y-auto">
+    <h3 class="text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
+      <i class="fas fa-pills"></i> Pilih Obat untuk Pesanan
+    </h3>
+    <p class="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg">
+      <i class="fas fa-info-circle mr-2"></i> Pilih minimal 1 obat sebelum menyelesaikan pesanan
+    </p>
+    <div id="daftarObatModal" class="space-y-3 mb-6">
+      <!-- obat akan di-render di sini -->
+    </div>
+    <div class="flex gap-3 justify-end">
+      <button onclick="closeModalObat()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg transition font-medium">
+        <i class="fas fa-times mr-2"></i> Batal
+      </button>
+      <button onclick="submitObat()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition font-medium">
+        <i class="fas fa-check mr-2"></i> Selesaikan Pesanan
+      </button>
+    </div>
+  </div>
+</div>
 
 </main>
 </div>
@@ -227,8 +305,56 @@ function showSection(id){
   document.getElementById(id).classList.add('active');
 }
 
+// ===== SEARCH & FILTER OBAT =====
+function filterObat() {
+  const searchInput = document.getElementById('searchInput').value.toLowerCase();
+  const filterKategori = document.getElementById('filterKategori').value.toLowerCase();
+  const rows = document.querySelectorAll('.obat-row');
+  let visibleCount = 0;
+
+  rows.forEach(row => {
+    const nama = row.querySelector('.nama-obat').textContent.toLowerCase();
+    const kategori = row.querySelector('.kategori-obat').textContent.toLowerCase();
+
+    const matchSearch = nama.includes(searchInput);
+    const matchKategori = filterKategori === '' || kategori === filterKategori;
+
+    if (matchSearch && matchKategori) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+
+  // Tampilkan pesan jika tidak ada hasil
+  const emptyMessage = document.getElementById('emptyMessage');
+  if (visibleCount === 0) {
+    emptyMessage.classList.remove('hidden');
+  } else {
+    emptyMessage.classList.add('hidden');
+  }
+}
+
+function resetFilter() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterKategori').value = '';
+  filterObat();
+}
+
+// Event listeners
+document.getElementById('searchInput').addEventListener('keyup', filterObat);
+document.getElementById('filterKategori').addEventListener('change', filterObat);
+
 /* ===== PESANAN REALTIME ===== */
-let pesananList=[];
+let pesananList = [];
+let obatList = [];
+let currentPesananId = null;
+
+async function loadObat() {
+  const res = await fetch("api/get_obat.php");
+  obatList = await res.json();
+}
 
 async function loadPesanan(){
   const res = await fetch("api/get_pesanan.php");
@@ -236,15 +362,39 @@ async function loadPesanan(){
   renderPesanan();
 }
 
-function renderPesanan(){
-  const tbody=document.getElementById("tabelPesanan");
-  if(pesananList.length===0){
-    tbody.innerHTML="<tr><td colspan='4' class='p-6 text-center text-gray-500'><i class='fas fa-inbox'></i> Tidak ada pesanan</td></tr>";
+function filterPesanan(){
+  const searchPembeli = document.getElementById('searchPembeli').value.toLowerCase();
+  const searchKeluhan = document.getElementById('searchKeluhan').value.toLowerCase();
+  const filterStatus = document.getElementById('filterStatusPesanan').value;
+
+  const filtered = pesananList.filter(p => {
+    const namaPembeli = (p.nama_pembeli || "").toLowerCase();
+    const keluhan = (p.keluhan || "").toLowerCase();
+    const status = p.status || "";
+
+    const matchPembeli = namaPembeli.includes(searchPembeli);
+    const matchKeluhan = keluhan.includes(searchKeluhan);
+    const matchStatus = filterStatus === "" || status === filterStatus;
+
+    return matchPembeli && matchKeluhan && matchStatus;
+  });
+
+  renderPesananFiltered(filtered);
+}
+
+function renderPesananFiltered(data){
+  const tbody = document.getElementById("tabelPesanan");
+  const emptyMsg = document.getElementById("emptyMessagePesanan");
+
+  if(data.length === 0){
+    tbody.innerHTML = "";
+    emptyMsg.classList.remove('hidden');
     return;
   }
 
-  tbody.innerHTML=pesananList.map(p=>`
-    <tr class="border-b hover:bg-gray-50 transition">
+  emptyMsg.classList.add('hidden');
+  tbody.innerHTML = data.map(p => `
+    <tr class="border-b hover:bg-gray-50 transition pesanan-row" data-status="${p.status}">
       <td class="p-4"><i class="fas fa-user-circle text-gray-500 mr-2"></i>${p.nama_pembeli}</td>
       <td class="p-4 text-gray-700">${p.keluhan}</td>
       <td class="p-4 text-center">
@@ -253,20 +403,83 @@ function renderPesanan(){
           : '<span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-hourglass-half mr-1"></i>Diproses</span>'}
       </td>
       <td class="p-4 text-center">
-        <button onclick="selesaikan(${p.id})" class="bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition font-medium text-sm"><i class="fas fa-check"></i> Selesaikan</button>
+        ${p.status === 'selesai' 
+          ? '<span class="text-gray-500 text-sm">Selesai</span>'
+          : '<button onclick="openModalObat(' + p.id + ')" class="bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition font-medium text-sm"><i class="fas fa-check"></i> Selesaikan</button>'}
       </td>
     </tr>
   `).join("");
 }
 
-async function selesaikan(id){
-  const fd=new FormData();
-  fd.append("pesanan_id",id);
-  await fetch("admin_pesanan_update.php",{method:"POST",body:fd});
-  loadPesanan();
+function renderPesanan(){
+  renderPesananFiltered(pesananList);
 }
 
-setInterval(loadPesanan,10000);
+function resetFilterPesanan(){
+  document.getElementById('searchPembeli').value = '';
+  document.getElementById('searchKeluhan').value = '';
+  document.getElementById('filterStatusPesanan').value = '';
+  filterPesanan();
+}
+
+// ===== MODAL OBAT =====
+function openModalObat(pesananId) {
+  currentPesananId = pesananId;
+  const modal = document.getElementById("modalObat");
+  const daftar = document.getElementById("daftarObatModal");
+  
+  daftar.innerHTML = obatList.map(o => `
+    <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:bg-green-50 cursor-pointer transition">
+      <input type="checkbox" class="obat-checkbox" value="${o.id}" style="width:20px;height:20px;cursor:pointer;">
+      <div class="ml-4 flex-1">
+        <div class="font-semibold text-gray-800">${o.nama}</div>
+        <div class="text-sm text-gray-600">${o.kategori}</div>
+        <div class="text-green-600 font-bold">Rp${Number(o.harga).toLocaleString('id-ID')}</div>
+      </div>
+      <img src="${o.gambar}" class="w-16 h-16 object-cover rounded-lg" onerror="this.src='https://via.placeholder.com/60'">
+    </label>
+  `).join("");
+  
+  modal.classList.remove('hidden');
+}
+
+function closeModalObat() {
+  document.getElementById("modalObat").classList.add('hidden');
+  currentPesananId = null;
+}
+
+async function submitObat() {
+  const checked = Array.from(document.querySelectorAll('.obat-checkbox:checked')).map(c => c.value);
+  
+  if (checked.length === 0) {
+    alert('⚠️ Pilih minimal 1 obat sebelum menyelesaikan pesanan!');
+    return;
+  }
+  
+  const fd = new FormData();
+  fd.append("pesanan_id", currentPesananId);
+  checked.forEach(id => fd.append("obat_id[]", id));
+  
+  const res = await fetch("admin_pesanan_update.php", {method: "POST", body: fd});
+  const msg = await res.text();
+  
+  alert(msg);
+  closeModalObat();
+  await loadPesanan();
+}
+
+// Tutup modal saat klik di luar
+document.getElementById('modalObat')?.addEventListener('click', function(e) {
+  if (e.target === this) closeModalObat();
+});
+
+// Event listeners untuk filter pesanan
+document.getElementById('searchPembeli').addEventListener('keyup', filterPesanan);
+document.getElementById('searchKeluhan').addEventListener('keyup', filterPesanan);
+document.getElementById('filterStatusPesanan').addEventListener('change', filterPesanan);
+
+loadObat();
+setInterval(loadPesanan, 10000);
 loadPesanan();
 </script>
 

@@ -13,4 +13,5 @@ while($r = mysqli_fetch_assoc($q)){
   $data[] = $r;
 }
 
+header('Content-Type: application/json');
 echo json_encode($data);
