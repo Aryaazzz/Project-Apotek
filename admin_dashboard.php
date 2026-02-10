@@ -415,6 +415,9 @@ while($o=mysqli_fetch_assoc($q)):
     <p class="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg">
       <i class="fas fa-info-circle mr-2"></i> Pilih minimal 1 obat sebelum menyelesaikan pesanan
     </p>
+    <div class="mb-4">
+      <input type="text" id="searchObatModal" placeholder="Cari obat..." class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 transition" />
+    </div>
     <div id="daftarObatModal" class="space-y-3 mb-6">
       <!-- obat akan di-render di sini -->
     </div>
@@ -594,7 +597,7 @@ function openModalObat(pesananId) {
   const daftar = document.getElementById("daftarObatModal");
   
   daftar.innerHTML = obatList.map(o => `
-    <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:bg-green-50 cursor-pointer transition">
+    <label class="obat-modal-item flex items-center p-4 border-2 border-gray-200 rounded-xl hover:bg-green-50 cursor-pointer transition" data-nama="${o.nama.toLowerCase()}">
       <input type="checkbox" class="obat-checkbox" value="${o.id}" style="width:20px;height:20px;cursor:pointer;">
       <div class="ml-4 flex-1">
         <div class="font-semibold text-gray-800">${o.nama}</div>
@@ -605,7 +608,24 @@ function openModalObat(pesananId) {
     </label>
   `).join("");
   
+  // Reset search
+  document.getElementById('searchObatModal').value = '';
+  
   modal.classList.remove('hidden');
+}
+
+function filterObatModal() {
+  const searchInput = document.getElementById('searchObatModal').value.toLowerCase();
+  const items = document.querySelectorAll('.obat-modal-item');
+  
+  items.forEach(item => {
+    const nama = item.getAttribute('data-nama');
+    if (nama.includes(searchInput)) {
+      item.style.display = '';
+    } else {
+      item.style.display = 'none';
+    }
+  });
 }
 
 function closeModalObat() {
@@ -650,6 +670,9 @@ document.getElementById('modalObat')?.addEventListener('click', function(e) {
 document.getElementById('searchPembeli').addEventListener('keyup', filterPesanan);
 document.getElementById('searchKeluhan').addEventListener('keyup', filterPesanan);
 document.getElementById('filterStatusPesanan').addEventListener('change', filterPesanan);
+
+// Event listener untuk search obat di modal
+document.getElementById('searchObatModal').addEventListener('keyup', filterObatModal);
 
 loadObat();
 setInterval(loadPesanan, 10000);

@@ -52,6 +52,136 @@ body.dark footer{
   color:#e5e7eb;
 }
 
+/* ===== TOAST NOTIFICATION ===== */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@keyframes checkmarkAnimation {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+.toast {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideInRight 0.4s ease forwards;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast.exit {
+  animation: slideOutRight 0.4s ease forwards;
+}
+
+.toast.success {
+  border-left: 4px solid #10b981;
+}
+
+.toast.error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.toast-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.toast.success .toast-icon {
+  background: #d1fae5;
+  color: #10b981;
+  animation: checkmarkAnimation 0.6s ease;
+}
+
+.toast.error .toast-icon {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.toast.warning .toast-icon {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.toast-message {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.toast-close:hover {
+  color: #4b5563;
+}
+
 /* ===============================
    MEDICAL BACKGROUND
 ================================ */
@@ -289,6 +419,9 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
 
 <body class="bg-gradient-to-br from-blue-50 via-green-50 to-green-100 min-h-screen text-gray-700 overflow-x-hidden">
 
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div id="toastContainer" class="toast-container"></div>
+
 <div class="medical-bg">
   <span class="pill" style="left:10%; animation-delay:0s;"></span>
   <span class="pill" style="left:35%; animation-delay:6s;"></span>
@@ -480,7 +613,7 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
     </div>
     <div>
       <p class="flex items-center justify-center gap-2 font-semibold">
-        <i class="fas fa-envelope text-lg"></i> info@apotek.com
+        <i class= "fas fa-envelope text-lg"></i> info@apotek.com
       </p>
     </div>
     <div>
@@ -499,12 +632,43 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
 
 <!-- STATUS SCRIPT (TIDAK DIUBAH LOGIC) -->
 <script>
+// ===== TOAST NOTIFICATION =====
+function showToast(title, message, type = 'success', duration = 4000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icons = {
+    success: '✓',
+    error: '✕',
+    warning: '!'
+  };
+  
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type]}</div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+  `;
+  
+  container.appendChild(toast);
+  
+  if (duration > 0) {
+    setTimeout(() => {
+      toast.classList.add('exit');
+      setTimeout(() => toast.remove(), 400);
+    }, duration);
+  }
+}
+
 document.getElementById("kirimKeluhan").addEventListener("click", () => {
   const nama = document.getElementById("nama_pembeli").value.trim();
   const keluhan = document.getElementById("keluhan").value.trim();
 
   if (!nama || !keluhan) {
-    alert("Nama dan keluhan wajib diisi!");
+    showToast('Data Tidak Lengkap', 'Silakan isi nama dan keluhan terlebih dahulu', 'warning');
     return;
   }
 
@@ -516,11 +680,12 @@ document.getElementById("kirimKeluhan").addEventListener("click", () => {
   .then(res => res.text())
   .then(res => {
     if (res.trim() === "ok") {
-      alert("Keluhan terkirim✅, Silahkan lihat Status pesanan untuk informasi lebih lanjut!");
+      showToast('Keluhan Berhasil Dikirim!', 'Silahkan lihat Status Pesanan untuk informasi lebih lanjut', 'success', 4000);
+      document.getElementById("nama_pembeli").value = "";
       document.getElementById("keluhan").value = "";
       loadStatusPesanan(); // refresh langsung
     } else {
-      alert("Gagal: " + res);
+      showToast('Gagal Mengirim Keluhan', res, 'error', 5000);
     }
   });
 });
