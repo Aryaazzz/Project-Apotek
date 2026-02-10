@@ -54,10 +54,144 @@ body{
     transform: translateY(0);
   }
 }
+
+/* ===== TOAST NOTIFICATION ===== */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@keyframes checkmarkAnimation {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+.toast {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideInRight 0.4s ease forwards;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast.exit {
+  animation: slideOutRight 0.4s ease forwards;
+}
+
+.toast.success {
+  border-left: 4px solid #10b981;
+}
+
+.toast.error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.toast-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.toast.success .toast-icon {
+  background: #d1fae5;
+  color: #10b981;
+  animation: checkmarkAnimation 0.6s ease;
+}
+
+.toast.error .toast-icon {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.toast.warning .toast-icon {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.toast-message {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.toast-close:hover {
+  color: #4b5563;
+}
+
 </style>
 </head>
 
 <body class="min-h-screen text-gray-700 bg-gray-50">
+
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div id="toastContainer" class="toast-container"></div>
 
 <div class="flex min-h-screen">
 
@@ -305,6 +439,37 @@ function showSection(id){
   document.getElementById(id).classList.add('active');
 }
 
+// ===== TOAST NOTIFICATION =====
+function showToast(title, message, type = 'success', duration = 4000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icons = {
+    success: '✓',
+    error: '✕',
+    warning: '!'
+  };
+  
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type]}</div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+  `;
+  
+  container.appendChild(toast);
+  
+  if (duration > 0) {
+    setTimeout(() => {
+      toast.classList.add('exit');
+      setTimeout(() => toast.remove(), 400);
+    }, duration);
+  }
+}
+
 // ===== SEARCH & FILTER OBAT =====
 function filterObat() {
   const searchInput = document.getElementById('searchInput').value.toLowerCase();
@@ -452,7 +617,7 @@ async function submitObat() {
   const checked = Array.from(document.querySelectorAll('.obat-checkbox:checked')).map(c => c.value);
   
   if (checked.length === 0) {
-    alert('⚠️ Pilih minimal 1 obat sebelum menyelesaikan pesanan!');
+    showToast('Pilihan Obat Kosong', 'Silakan pilih minimal 1 obat sebelum menyelesaikan pesanan', 'warning');
     return;
   }
   
@@ -463,9 +628,17 @@ async function submitObat() {
   const res = await fetch("admin_pesanan_update.php", {method: "POST", body: fd});
   const msg = await res.text();
   
-  alert(msg);
+  // Check if response contains "Error" or starts with "Status Error"
+  if (msg.includes('Error') || msg.startsWith('Status')) {
+    showToast('Gagal Menyelesaikan', msg, 'error', 5000);
+  } else {
+    showToast('Pesanan Berhasil Diselesaikan!', msg, 'success', 4000);
+  }
+  
   closeModalObat();
-  await loadPesanan();
+  if (!msg.includes('Error') && !msg.startsWith('Status')) {
+    await loadPesanan();
+  }
 }
 
 // Tutup modal saat klik di luar

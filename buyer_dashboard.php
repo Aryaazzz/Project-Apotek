@@ -287,7 +287,7 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
 </style>
 </head>
 
-<body class="bg-gradient-to-br from-green-50 via-green-100 to-green-200 min-h-screen text-gray-700 overflow-x-hidden">
+<body class="bg-gradient-to-br from-blue-50 via-green-50 to-green-100 min-h-screen text-gray-700 overflow-x-hidden">
 
 <div class="medical-bg">
   <span class="pill" style="left:10%; animation-delay:0s;"></span>
@@ -300,129 +300,127 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
   <span class="plus" style="left:70%; animation-delay:15s;">+</span>
 </div>
 
-<!-- BACKGROUND DECOR -->
-<div class="fixed inset-0 -z-10 overflow-hidden">
-  <div class="absolute top-20 left-10 text-green-300 text-4xl opacity-30 float">+</div>
-  <div class="absolute bottom-20 right-16 text-green-300 text-5xl opacity-20 float">+</div>
-</div>
-
-<main class="max-w-6xl mx-auto px-4 py-10 space-y-20">
-
 <!-- HEADER -->
-
-<header class="relative flex items-center justify-center gap-6 py-8">
-  <div class="absolute inset-0 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 opacity-20 blur-3xl rounded-full animate-pulse"></div>
-  <div class="relative w-20 h-20 rounded-full bg-gradient-to-br from-green-400 via-green-500 to-green-600 text-white flex items-center justify-center shadow-2xl header-icon hover:animate-spin transition-all duration-500">
-    <i class="fas fa-pills text-3xl"></i>
+<header class="bg-gradient-to-r from-green-600 to-blue-600 shadow-2xl sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-full bg-white bg-opacity-20 text-white flex items-center justify-center text-2xl shadow-lg">
+        <i class="fas fa-pills"></i>
+      </div>
+      <div class="text-white">
+        <h1 class="text-2xl font-bold">Apotek Kelompok Satu</h1>
+        <p class="text-sm text-green-100">Portal Pesanan Obat</p>
+      </div>
+    </div>
+    <a href="auth/logout.php" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition duration-300 transform hover:scale-105 font-medium shadow-lg">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
   </div>
-  <div class="relative">
-    <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 tracking-wider animate-pulse">
-      Apotek Kelompok Satu</h1>
-    <p class="text-center text-green-600 font-medium mt-2 animate-fade-in">Kesehatan Anda Prioritas Kami</p>
-  </div>
-  <a href="auth/logout.php" class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105">
-    <i class="fas fa-sign-out-alt mr-2"></i>Logout
-  </a>
 </header>
+
+<main class="max-w-7xl mx-auto px-4 py-12 space-y-16">"
 <!-- DAFTAR OBAT -->
-<section>
-  <h2 class="text-xl font-bold text-green-700 mb-8 text-center flex justify-center gap-2 items-center">
-    <i class="fas fa-capsules"></i> Daftar Obat
+<section class="bg-white rounded-2xl shadow-lg p-8">
+  <h2 class="text-3xl font-bold text-green-700 mb-2 flex items-center gap-3">
+    <i class="fas fa-capsules text-green-600 text-2xl"></i> Daftar Obat Tersedia
   </h2>
+  <p class="text-gray-600 mb-8">Lihat berbagai pilihan obat yang tersedia di apotek kami</p>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     <?php while ($o = mysqli_fetch_assoc($data)) : ?>
-    <div class="bg-white rounded-3xl shadow-md hover:shadow-2xl transition-all duration-500 p-5 relative overflow-hidden group">
+    <div class="group bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-green-300">
       
-      <span class="absolute top-4 right-4 text-xs bg-green-500 text-white px-3 py-1 rounded-full shadow">
-        <?= $o['kategori'] ?>
-      </span>
-
-      <div class="flex justify-center">
-        <img src="<?= $o['gambar'] ?>" class="h-36 object-contain transition duration-500 group-hover:scale-110">
+      <div class="relative h-40 bg-gradient-to-br from-green-100 to-blue-50 flex items-center justify-center overflow-hidden">
+        <img src="<?= $o['gambar'] ?>" class="h-32 object-contain transition-transform duration-500 group-hover:scale-125">
+        <span class="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+          <?= $o['kategori'] ?>
+        </span>
       </div>
 
-      <h3 class="text-center font-semibold text-lg mt-3"><?= $o['nama'] ?></h3>
-      <p class="text-center text-green-600 font-bold mt-1">
-        Rp<?= number_format($o['harga']) ?>
-      </p>
-
-      <p class="text-sm text-center text-gray-500 mt-2">
-        <?= $o['deskripsi'] ?>
-      </p>
+      <div class="p-5 space-y-3">
+        <h3 class="font-bold text-lg text-gray-800 line-clamp-2"><?= $o['nama'] ?></h3>
+        
+        <p class="text-sm text-gray-600 line-clamp-2">
+          <?= $o['deskripsi'] ?? 'Obat berkualitas tinggi' ?>
+        </p>
+        
+        <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
+          <span class="text-2xl font-bold text-green-600">
+            Rp<?= number_format($o['harga']) ?>
+          </span>
+          <div class="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600 font-bold">
+            ✓
+          </div>
+        </div>
+      </div>
     </div>
     <?php endwhile; ?>
   </div>
 </section>
 
-<!-- FORM KELUHAN -->
-<section class="flex justify-center px-4">
-  <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-6 space-y-6 hover:shadow-2xl transition">
-
-    <!-- Judul -->
-    <h2 class="text-lg font-bold text-green-700 text-center flex justify-center items-center gap-2">
-      <i class="fas fa-comment-medical"></i>
-      Konsultasi Keluhan
+<!-- FORM KELUHAN & STATUS -->
+<section class="grid md:grid-cols-2 gap-8">
+  <!-- Form Input -->
+  <div class="bg-white rounded-2xl shadow-lg p-8 border-l-4 border-blue-500">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+      <i class="fas fa-comment-medical text-blue-500 text-xl"></i> Konsultasi Keluhan
     </h2>
+    <p class="text-gray-600 text-sm mb-6">Ceritakan keluhan Anda kepada apoteker kami</p>
 
-    <!-- Form -->
-    <div class="space-y-4">
-
+    <div class="space-y-5">
       <!-- Nama -->
       <div>
-        <label class="text-sm font-medium text-gray-600">Nama kamu</label>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          <i class="fas fa-user text-blue-500 mr-2"></i>Nama Anda
+        </label>
         <input
           type="text"
           id="nama_pembeli"
-          placeholder="Masukkan nama"
-          required
-          class="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200
-                 focus:outline-none focus:ring-2 focus:ring-green-400
-                 transition"
+          placeholder="Masukkan nama lengkap"
+          class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 transition-all duration-300 hover:shadow-md text-gray-800"
         >
       </div>
 
       <!-- Keluhan -->
       <div>
-        <label class="text-sm font-medium text-gray-600">Keluhan</label>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          <i class="fas fa-stethoscope text-blue-500 mr-2"></i>Keluhan / Gejala
+        </label>
         <textarea
           id="keluhan"
-          rows="4"
-          placeholder="Ceritakan keluhan kamu di sini..."
-          class="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200
-                 focus:outline-none focus:ring-2 focus:ring-green-400
-                 transition resize-none"
+          rows="5"
+          placeholder="Jelaskan keluhan atau gejala yang Anda alami secara detail..."
+          class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 transition-all duration-300 hover:shadow-md resize-none text-gray-800"
         ></textarea>
       </div>
 
       <!-- Tombol -->
       <button
         id="kirimKeluhan"
-        type="button"
-        class="w-full bg-green-600 text-white py-3 rounded-xl
-               font-semibold flex items-center justify-center gap-2
-               hover:bg-green-700 active:scale-95 transition"
+        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-3 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
       >
-        <i class="fas fa-paper-plane"></i>
-        Kirim Keluhan
+        <i class="fas fa-paper-plane text-lg"></i>
+        Kirim Keluhan ke Admin
       </button>
-
     </div>
-
   </div>
-</section>
 
-<!-- STATUS PESANAN -->
-<section class="flex justify-center">
-  <div class="w-full max-w-xl bg-gradient-to-br from-white to-green-50 rounded-3xl shadow-xl p-8 text-center space-y-4 hover:shadow-2xl transition-all duration-500 animate-fade-in">
-    <h2 class="text-xl font-bold text-green-700 flex justify-center gap-3 items-center">
-      <i class="fas fa-clock text-2xl animate-pulse"></i> Status Pesanan
+  <!-- Status Pesanan -->
+  <div class="bg-gradient-to-br from-white via-green-50 to-green-100 rounded-2xl shadow-lg p-8 border-l-4 border-green-500">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+      <i class="fas fa-clipboard-check text-green-600 text-xl animate-pulse"></i> Status Pesanan Anda
     </h2>
-    <div id="statusPesanan" class="text-lg font-medium text-gray-600">🕒 Menunggu keluhan kamu...</div>
-    <div class="flex justify-center space-x-2">
-      <div class="w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
-      <div class="w-3 h-3 bg-green-400 rounded-full animate-ping" style="animation-delay: 0.2s;"></div>
-      <div class="w-3 h-3 bg-green-400 rounded-full animate-ping" style="animation-delay: 0.4s;"></div>
+    
+    <div id="statusPesanan" class="space-y-4">
+      <div class="text-center py-12">
+        <div class="flex justify-center mb-4">
+          <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+            <i class="fas fa-hourglass-half text-gray-500 text-2xl animate-bounce"></i>
+          </div>
+        </div>
+        <p class="text-gray-600 font-medium">Menunggu keluhan Anda...</p>
+        <p class="text-sm text-gray-500 mt-2">Kirim keluhan di form sebelah untuk memulai</p>
+      </div>
     </div>
   </div>
 </section>
@@ -471,11 +469,29 @@ main > section:nth-child(6) { animation-delay: 0.6s; }
 
 
 <!-- FOOTER -->
-<footer class="bg-white rounded-3xl shadow-lg p-6 text-center space-y-2">
-  <h3 class="font-bold text-green-700">Hubungi Kami</h3>
-  <p><i class="fas fa-phone"></i> +62 123 456 7890</p>
-  <p><i class="fas fa-envelope"></i> info@apotekkelompoksatu.com</p>
-  <p><i class="fas fa-map-marker-alt"></i> Jl. Kesehatan No.123</p>
+<footer class="bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white text-center space-y-4">
+  <h3 class="text-2xl font-bold">Apotek Kelompok Satu</h3>
+  <div class="h-1 w-20 bg-white bg-opacity-30 mx-auto rounded-full"></div>
+  <div class="grid md:grid-cols-3 gap-6 py-4">
+    <div>
+      <p class="flex items-center justify-center gap-2 font-semibold">
+        <i class="fas fa-phone text-lg"></i> +62 123 456 7890
+      </p>
+    </div>
+    <div>
+      <p class="flex items-center justify-center gap-2 font-semibold">
+        <i class="fas fa-envelope text-lg"></i> info@apotek.com
+      </p>
+    </div>
+    <div>
+      <p class="flex items-center justify-center gap-2 font-semibold">
+        <i class="fas fa-map-marker-alt text-lg"></i> Jl. Kesehatan No.123
+      </p>
+    </div>
+  </div>
+  <p class="text-sm text-green-100 pt-4 border-t border-white border-opacity-20">
+    © 2026 Apotek Kelompok Satu. Semua hak dilindungi. | Kesehatan Anda Prioritas Kami
+  </p>
 </footer>
 
 </main>
